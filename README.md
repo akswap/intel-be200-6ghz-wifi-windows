@@ -12,11 +12,11 @@ Keywords: **Intel BE200 6GHz Windows, BE200 driver 23.0.6.4, Wi‑Fi 7 6GHz, AX4
 |---|---|
 | Motherboard | **Gigabyte B760M DS3H AX Rev. 1.2** |
 | Confirmed adapter | **Intel Wi‑Fi 7 BE200 320MHz — standalone PCIe/M.2** |
-| Built-in adapter | **Intel AX411 / CNVio2 — 6 GHz can be detected, but discovery is delayed/inconsistent and the same stable BE200 behavior was not reproduced** |
+| Built-in adapter | **Intel AX411 / CNVio2 — 6 GHz scan and active association now confirmed with driver 23.0.6.4; stable 2402/2402 Mbps PHY reproduced on Channel 37** |
 | Operating system | Windows |
 | Tested Intel driver | **23.0.6.4** |
 | Working driver branch/service | **Netwtw14** |
-| Windows Home Location tested | **India (GeoId 113)** and **US (GeoId 244)** at different stages of testing (just eneble /desable WIFI adaptor after reboot  |
+| Windows region state used for the successful AX411 reproduction | **Country or region: United States (GeoId 244)** and **Device setup region: United States** |
 
 ## Main Result
 
@@ -129,32 +129,48 @@ BE200 + 23.0.6.4 / Netwtw14
 
 This should not be interpreted as a guarantee that every system will have identical discovery timing.
 
-## AX411 vs BE200 — Important Hardware Difference
+## AX411 — Newly Confirmed 6 GHz Result
 
-The motherboard-integrated **Intel AX411** behaves very differently from the standalone BE200 on this system.
+The motherboard-integrated **Intel AX411 160MHz (CNVio2)** has now been directly and repeatedly validated with Intel driver **23.0.6.4**.
 
-With an early Intel driver, the AX411 has occasionally detected 6 GHz, including higher-channel operation, but discovery is **not reliably reproducible**. Even **Channel 37 can take roughly 3–5 minutes to appear**, and a higher channel may appear on one test but fail to appear on another.
+Confirmed observations on this system:
 
-The Device Manager advanced property **Global BG Scan Blocking** is already at its default **Never** value during this observation. Therefore, the AX411 delay cannot simply be attributed to that setting being configured to block background scans.
+- Direct 6 GHz BSSIDs become visible under the successful Windows region configuration described below.
+- Active 6 GHz association was reproduced on **Channel 85**, **Channel 165**, and **Channel 37**.
+- On **Channel 37**, the AX411 reached its full **2402 / 2402 Mbps** Wi-Fi 6E PHY rate.
+- The 2402 / 2402 Mbps result held across three consecutive samples taken 10 seconds apart.
+- During that stable Channel 37 test Windows reported **93% signal / -41 dBm RSSI**.
+- BE200 was disabled during the AX411 validation, so the result is independently attributable to the motherboard-integrated AX411.
 
-```text
-Built-in AX411
-→ CNVio2 / platform-integrated path
-→ 6 GHz is genuinely detectable
-→ Ch 37 may take about 3–5 minutes to appear
-→ higher channels have appeared occasionally
-→ discovery timing is inconsistent / unpredictable
-→ Global BG Scan Blocking = Never (default)
-→ same stable BE200 behavior not reproduced
+Stable AX411 capture:
 
-Standalone BE200
-→ PCIe/USB M.2 path
-→ Driver 23.0.6.4 / Netwtw14
-→ stable in current testing
-→ active connections confirmed at Ch 37, 101, 133, 149, 165 and 213
-```
+    Adapter      : Intel(R) Wi-Fi 6E AX411 160MHz
+    Driver       : 23.0.6.4
+    SSID         : MobSoftAP_Router
+    Band         : 6 GHz
+    Channel      : 37
+    Radio type   : 802.11ax
+    Receive rate : 2402 Mbps
+    Transmit rate: 2402 Mbps
+    Signal       : 93%
+    RSSI         : -41 dBm
 
-This suggests the result depends on the **specific adapter architecture plus Intel driver/firmware/platform path**, not only on a generic Windows registry or scan setting.
+Repeated stability check:
+
+    Sample 1: 6 GHz / Ch 37 / 2402 / 2402 Mbps / -41 dBm
+    Sample 2: 6 GHz / Ch 37 / 2402 / 2402 Mbps / -41 dBm
+    Sample 3: 6 GHz / Ch 37 / 2402 / 2402 Mbps / -41 dBm
+
+AX411 also established an active 6 GHz connection on Channel 165, confirming that the result is not limited to the lower 6 GHz channel used for the 2402 Mbps stability test.
+
+### Client 6 GHz vs 6 GHz P2P GO
+
+With driver 23.0.6.4, AX411 reports:
+
+    P2P GO on 6 GHz : Not Supported
+    P2P SAE on GO   : Not Supported
+
+This does **not** prevent normal 6 GHz client/STA operation. The live tests above confirm that 6 GHz client connectivity and 6 GHz P2P GO / hotspot capability are separate paths.
 
 ## AX210 / AX211 Candidate Notes
 
@@ -167,28 +183,51 @@ Those reports support AX210 as a plausible candidate, but the exact multi-channe
 ```text
 AX210 (PCIe/USB M.2) → Not yet tested here; strong candidate. Older-driver 6 GHz operation reported publicly.
 AX211 (CNVio2)       → Different platform-integrated architecture.
-AX411 (CNVio2)       → 6 GHz detectable but delayed/inconsistent; same BE200 behavior not reproduced.
+AX411 (CNVio2)       → Confirmed 6 GHz active association; stable 2402/2402 Mbps at Ch 37 with 23.0.6.4.
 BE200 (PCIe/USB M.2) → Confirmed working and currently stable in this project.
 ```
 
-## Tested with Windows Home Location
+## Windows Region Settings — Reproduced A/B Result
 
-Windows Home Location was tested at different stages as India and US:
+The current AX411 tests showed that **two Windows region settings matter on this test system**:
 
-```powershell
-Get-WinHomeLocation
-```
+1. **Country or region** = United States
+2. **Device setup region** = United States
 
-Observed values included:
+The successful state shown in Windows Settings was:
 
-```text
-113   India (all 6Ghz band Limited after restart)
-244   US (100% ok Stable )
-```
+    Country or region   : United States
+    Device setup region : United States
 
-Successful BE200 testing was performed after setting Windows Home Location to India and rebooting, including Channel 101 connection and Channel 165 visibility.
+`Get-WinHomeLocation` reported:
 
-> Windows Home Location and the Wi‑Fi radio regulatory domain are not necessarily the same mechanism. These values only document the Windows Home Location used during testing.
+    GeoId 244  United States
+
+### India vs US A/B test
+
+With **India / GeoId 113**, after refreshing the adapter, direct selectable 6 GHz BSSID visibility disappeared in the reproduced test. 6 GHz entries could still appear only as colocated-AP metadata attached to 5 GHz MLO-capable BSSIDs.
+
+After returning **Country or region** to **United States / GeoId 244** while the **Device setup region** was also **United States**, the direct 6 GHz SSID returned and the AX411 connected again on 6 GHz.
+
+Example successful reconnection after returning to the US configuration:
+
+    Adapter    : Intel(R) Wi-Fi 6E AX411 160MHz
+    SSID       : TP-Link_6G_be
+    Band       : 6 GHz
+    Channel    : 165
+    Radio type : 802.11ax
+
+### Discovery delay / adapter refresh
+
+After changing the region configuration, 6 GHz may not appear instantly. In this testing it can take roughly **1–2 minutes**. Disabling and re-enabling the Wi-Fi adapter/radio usually refreshes discovery faster.
+
+Example refresh:
+
+    Disable-NetAdapter -Name "WiFi" -Confirm:$false
+    Start-Sleep -Seconds 3
+    Enable-NetAdapter -Name "WiFi" -Confirm:$false
+
+> **Important:** These are reproduced Windows test observations, not a claim that Windows Home Location or Device setup region is universally identical to the Wi-Fi RF regulatory domain. Users must still follow the regulations applicable to their location and equipment.
 
 ## What “No Modification” Means
 
@@ -267,7 +306,7 @@ Intel Wi‑Fi Driver : 23.0.6.4
 Driver branch      : Netwtw14
 ```
 
-For the closest reproduction, use the same driver version.
+For the closest reproduction, use the same driver version. A **clean install is recommended**, because Windows may automatically bind a newer Intel Wi-Fi package from Windows Update or from the local Driver Store.
 
 ### Clean driver installation
 
