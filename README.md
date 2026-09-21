@@ -187,29 +187,45 @@ AX411 (CNVio2)       → Confirmed 6 GHz active association; stable 2402/2402 Mb
 BE200 (PCIe/USB M.2) → Confirmed working and currently stable in this project.
 ```
 
-## Windows Region Settings — Reproduced A/B Result
+## Windows Region / Location Settings — Reproduced A/B Result
 
-The current AX411 tests showed that **two Windows region settings matter on this test system**:
+The current AX411 tests showed that **three Windows location/region settings matter on this test system**:
 
 1. **Country or region** = United States
 2. **Device setup region** = United States
+3. **Default location (map pin)** = a location in the United States
 
-The successful state shown in Windows Settings was:
+The successful Windows state used in the reproduced test included:
 
     Country or region   : United States
     Device setup region : United States
+    Default location    : United States map location
 
 `Get-WinHomeLocation` reported:
 
     GeoId 244  United States
 
+### Default location / map pin
+
+Windows **Default location** was also set to a U.S. location. In the reproduced setup, this setting is considered part of the working configuration.
+
+Path:
+
+    Settings → Privacy & security → Location → Default location → Set default
+
+Example test location used:
+
+    721 Beckman Ln, Texline, TX 79087, United States
+
+This is separate from `Set-WinHomeLocation -GeoId 244`. The Home Location / GeoId and the Windows Location-service default map location are different settings.
+
 ### India vs US A/B test
 
 With **India / GeoId 113**, after refreshing the adapter, direct selectable 6 GHz BSSID visibility disappeared in the reproduced test. 6 GHz entries could still appear only as colocated-AP metadata attached to 5 GHz MLO-capable BSSIDs.
 
-After returning **Country or region** to **United States / GeoId 244** while the **Device setup region** was also **United States**, the direct 6 GHz SSID returned and the AX411 connected again on 6 GHz.
+After returning **Country or region** to **United States / GeoId 244**, while **Device setup region** and **Default location** were also set to the United States, the direct 6 GHz SSID returned and the AX411 connected again on 6 GHz.
 
-Example successful reconnection after returning to the US configuration:
+Example successful reconnection after returning to the U.S. configuration:
 
     Adapter    : Intel(R) Wi-Fi 6E AX411 160MHz
     SSID       : TP-Link_6G_be
@@ -219,7 +235,7 @@ Example successful reconnection after returning to the US configuration:
 
 ### Discovery delay / adapter refresh
 
-After changing the region configuration, 6 GHz may not appear instantly. In this testing it can take roughly **1–2 minutes**. Disabling and re-enabling the Wi-Fi adapter/radio usually refreshes discovery faster.
+After changing the region/location configuration, 6 GHz may not appear instantly. In this testing it can take roughly **1–2 minutes**. Disabling and re-enabling the Wi-Fi adapter/radio usually refreshes discovery faster.
 
 Example refresh:
 
@@ -227,7 +243,7 @@ Example refresh:
     Start-Sleep -Seconds 3
     Enable-NetAdapter -Name "WiFi" -Confirm:$false
 
-> **Important:** These are reproduced Windows test observations, not a claim that Windows Home Location or Device setup region is universally identical to the Wi-Fi RF regulatory domain. Users must still follow the regulations applicable to their location and equipment.
+> **Important:** These are reproduced Windows test observations, not a claim that Windows Home Location, Device setup region, or Default location is universally identical to the Wi-Fi RF regulatory domain. Users must still follow the regulations applicable to their location and equipment.
 
 ## What “No Modification” Means
 
